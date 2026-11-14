@@ -3,7 +3,8 @@
 A Python command-line application that shows a computer's **current public IPv4 and IPv6 addresses** together with their **geolocation, ISP, ASN, country code and timezone**. It was built for network technicians as a prototype for the engineering department.
 
 DEVASC Project Activity 3 – Social Coding, **Option 2: New Application (IPv4/IPv6 Address Application)**
-Team: **Byte Club** – University of Santo Tomas
+Team: **Byte Club** – University of Santo Tomas  
+Repository: https://github.com/notringding/byteclub
 
 ## Features
 
@@ -15,7 +16,7 @@ Team: **Byte Club** – University of Santo Tomas
 | 4 | Look up **any** IPv4/IPv6 address, with input validation | Lets technicians check addresses they see in logs, not only their own |
 | 5 | Offline technical details: IPv4 binary form and class, IPv6 expanded/compressed form, address type (public, private, loopback, link-local, CGNAT, multicast) | Explains why a private address like 192.168.x.x cannot be geolocated |
 | 6 | Google Maps link for the coordinates | Quick visual check of the location |
-| 7 | Export the report to **JSON or TXT** in `reports/` | So results can be attached to tickets or documentation |
+| 7 | Export the report to **JSON or TXT** in `reports/` (file name includes the IP, e.g. `ip_report_8-8-8-8_20261114_221500.json`) | So results can be attached to tickets or documentation |
 | 8 | Color-coded tables (colorama + tabulate) | Easier to read than plain print statements |
 | 9 | **Fallback API**: if ipapi.co fails or is rate-limited, ipwho.is is used | ipapi.co's free tier has a daily limit |
 | 10 | Command-line options (`--ip`, `--me`, `--export`) | Lets the app be used in scripts without the menu |
@@ -36,8 +37,8 @@ All are free and need **no API key**.
 Requires **Python 3.9+**.
 
 ```bash
-git clone https://github.com/<your-org>/byteclub-ip-info.git
-cd byteclub-ip-info
+git clone https://github.com/notringding/byteclub.git
+cd byteclub
 python -m venv venv
 venv\Scripts\activate          # Windows
 # source venv/bin/activate     # macOS / Linux
@@ -58,7 +59,7 @@ python -m unittest discover -v tests
 ## Project structure
 
 ```
-byteclub-ip-info/
+byteclub/
 ├── ipinfo_app/
 │   ├── main.py      # entry point: menu, command-line options, program flow
 │   ├── api.py       # all REST API calls (ipify, ipapi.co, ipwho.is)
