@@ -67,6 +67,22 @@ class TestClassification(unittest.TestCase):
         self.assertEqual(utils.classify_ip("224.0.0.1"), "Multicast")
         self.assertEqual(utils.classify_ip("100.64.0.1"), "Shared / CGNAT (special-use)")
 
+    def test_other_private_ranges(self):
+        # RFC 1918 has three private blocks, not just 192.168.0.0/16.
+        self.assertEqual(utils.classify_ip("10.0.0.5"), "Private (RFC 1918 / ULA)")
+        self.assertEqual(utils.classify_ip("172.16.0.1"), "Private (RFC 1918 / ULA)")
+
+    def test_ipv6_types(self):
+        self.assertEqual(utils.classify_ip("::1"), "Loopback")
+        self.assertEqual(utils.classify_ip("fe80::1"), "Link-local")
+        self.assertEqual(utils.classify_ip("fd00::1"), "Private (RFC 1918 / ULA)")
+        self.assertEqual(utils.classify_ip("2001:4860:4860::8888"), "Public (global)")
+
+    def test_ipv4_classes(self):
+        self.assertEqual(utils.ipv4_class("10.0.0.5"), "A")
+        self.assertEqual(utils.ipv4_class("172.16.0.1"), "B")
+        self.assertEqual(utils.ipv4_class("230.0.0.1"), "D (multicast)")
+
     def test_ipv4_technical_details(self):
         details = utils.technical_details("192.168.1.1")
         self.assertEqual(details["Binary"], "11000000.10101000.00000001.00000001")
@@ -105,6 +121,12 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(details["source"], "ipwho.is")
         self.assertEqual(details["asn"], "AS15169")  # same format as ipapi.co
         self.assertEqual(details["timezone"], "America/Los_Angeles")
+
+    @mock.patch("ipinfo_app.api.requests.get")
+    def test_fallback_when_server_error(self, get):
+        # ipapi.co returns HTTP 500, so ipwho.is should be used instead.
+        get.side_effect = [fake_response({}, status=500), fake_response(IPWHO_SAMPLE)]
+        self.assertEqual(api.get_ip_details("8.8.8.8")["source"], "ipwho.is")
 
     @mock.patch("ipinfo_app.api.requests.get", side_effect=requests.Timeout)
     def test_all_apis_down(self, _get):
