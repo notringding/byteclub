@@ -17,13 +17,29 @@ TABLE_STYLE = "rounded_outline"
 NOT_AVAILABLE = Fore.LIGHTBLACK_EX + "Not available" + Style.RESET_ALL
 
 
+VERSION = "1.1"
+
+
 def banner():
-    """Print the app title."""
+    """Print the app title and a one-line hint on how to use it."""
     line = "=" * 52
     print(Fore.CYAN + line)
-    print(Fore.CYAN + Style.BRIGHT + "   BYTE CLUB  |  IP Address Information App")
+    print(Fore.CYAN + Style.BRIGHT + f"   BYTE CLUB  |  IP Address Information App  v{VERSION}")
     print(Fore.CYAN + "   Public IPv4 / IPv6, geolocation, ISP and ASN")
     print(Fore.CYAN + line)
+    print(Fore.LIGHTBLACK_EX + "   Tip: run with --help to see the command-line options.")
+
+
+def _type_color(value):
+    """Color the address type: green = public, yellow = private/special-use."""
+    color = Fore.GREEN if str(value).startswith("Public") else Fore.YELLOW
+    return color + str(value) + Style.RESET_ALL
+
+
+def _section(title):
+    """Print a small colored heading above a table."""
+    print()
+    print(Fore.CYAN + Style.BRIGHT + f"-- {title} --")
 
 
 def menu():
@@ -51,7 +67,7 @@ def show_addresses(ipv4, ipv6):
     for label, address in (("IPv4", ipv4), ("IPv6", ipv6)):
         status = Fore.GREEN + "Connected" if address else Fore.RED + "No connectivity"
         rows.append([label, _value(address), status + Style.RESET_ALL])
-    print()
+    _section("Public IP addresses")
     print(tabulate(rows, headers=["Version", "Public address", "Status"], tablefmt=TABLE_STYLE))
     if not ipv6:
         info("No IPv6 address found. Your ISP or network may not support IPv6 yet.")
@@ -59,9 +75,14 @@ def show_addresses(ipv4, ipv6):
 
 def show_details(details, technical, map_url=None):
     """Print the full details table for one IP address."""
+    # The address type gets its own color so private/CGNAT addresses stand out.
+    technical_rows = [
+        [key, _type_color(value) if key == "Type" else value]
+        for key, value in technical.items()
+    ]
     rows = [
         ["IP address", _value(details.get("ip"))],
-        *[[key, value] for key, value in technical.items()],
+        *technical_rows,
         ["City", _value(details.get("city"))],
         ["Region", _value(details.get("region"))],
         ["Country", _value(details.get("country"))],
@@ -71,9 +92,9 @@ def show_details(details, technical, map_url=None):
         ["Timezone", _value(details.get("timezone"))],
         ["ISP / Organization", _value(details.get("isp"))],
         ["ASN", _value(details.get("asn"))],
-        ["Map", _value(map_url)],
+        ["Map", _value(Fore.CYAN + map_url + Style.RESET_ALL if map_url else None)],
     ]
-    print()
+    _section(f"Details for {details.get('ip', 'this address')}")
     print(tabulate(rows, headers=[Fore.CYAN + "Field", "Value" + Style.RESET_ALL], tablefmt=TABLE_STYLE))
     print(Fore.LIGHTBLACK_EX + f"Data source: {details.get('source', 'unknown')}")
 
