@@ -87,7 +87,10 @@ def export_report(report, fmt="json", folder=REPORTS_DIR):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = folder / f"ip_report_{stamp}.{fmt}"
+    # Put the IP in the file name so reports are easy to tell apart.
+    # ":" (IPv6) and "." are replaced because Windows file names can't use ":".
+    ip_part = str(report.get("ip") or "unknown").replace(":", "-").replace(".", "-")
+    path = folder / f"ip_report_{ip_part}_{stamp}.{fmt}"
     if fmt == "json":
         path.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
     else:
