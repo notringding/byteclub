@@ -44,6 +44,9 @@ def my_public_ip():
 def lookup_any_ip():
     """Ask the user for an IP, validate it, and show its report."""
     text = input("Enter an IPv4 or IPv6 address: ")
+    if not text.strip():
+        display.error("No address entered. Please type an IP address, e.g. 8.8.8.8")
+        return None
     ip = utils.validate_ip(text)
     if ip is None:
         display.error(f"'{text.strip()}' is not a valid IPv4 or IPv6 address.")
@@ -96,6 +99,20 @@ def parse_args():
 
 
 def main():
+    try:
+        run()
+    except (KeyboardInterrupt, EOFError):
+        # Ctrl+C (or Ctrl+Z / Ctrl+D at a prompt) should close the app
+        # politely instead of printing a long Python traceback.
+        print()
+        display.info("Stopped by user. Goodbye from Byte Club!")
+    except OSError as exc:
+        # e.g. no permission to create the reports/ folder when exporting
+        display.error(f"Could not save the report: {exc}")
+
+
+def run():
+    """Read the command-line options and start the menu or a one-time lookup."""
     args = parse_args()
     if not (args.ip or args.me):
         interactive()
