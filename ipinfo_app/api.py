@@ -28,11 +28,27 @@ IPV6_URL = "https://api6.ipify.org?format=json"
 IPAPI_URL = "https://ipapi.co/{ip}/json/"
 IPWHO_URL = "https://ipwho.is/{ip}"
 TIMEOUT = 5  # seconds to wait for each API before giving up
+RETRIES = 1  # extra tries when a request times out or the connection drops
 HEADERS = {"User-Agent": "ByteClub-IPInfo/1.0"}  # ipapi.co blocks empty user agents
 
 
 class APIError(Exception):
     """Raised when no API could return usable data."""
+
+
+def _get(url):
+    """GET a URL, trying again up to RETRIES times on a timeout or dropped connection.
+
+    Slow school or mobile networks often fail once and then work on the
+    next try, so one retry avoids switching to the fallback API too early.
+    Other errors (HTTP 4xx/5xx, bad JSON) are not retried.
+    """
+    for attempt in range(RETRIES + 1):
+        try:
+            return requests.get(url, headers=HEADERS, timeout=TIMEOUT)
+        except (requests.Timeout, requests.ConnectionError):
+            if attempt == RETRIES:
+                raise
 
 
 def get_public_ip(version=4):
@@ -54,7 +70,7 @@ def get_public_ip(version=4):
 
 def _from_ipapi(ip):
     """Ask ipapi.co for details and convert them to our standard dictionary."""
-    response = requests.get(IPAPI_URL.format(ip=ip), headers=HEADERS, timeout=TIMEOUT)
+    response = _get(IPAPI_URL.format(ip=ip))
     response.raise_for_status()
     data = response.json()
     # ipapi.co answers HTTP 200 with {"error": true, "reason": ...} when it
@@ -79,7 +95,7 @@ def _from_ipapi(ip):
 
 def _from_ipwho(ip):
     """Ask ipwho.is for details and convert them to our standard dictionary."""
-    response = requests.get(IPWHO_URL.format(ip=ip), headers=HEADERS, timeout=TIMEOUT)
+    response = _get(IPWHO_URL.format(ip=ip))
     response.raise_for_status()
     data = response.json()
     if not data.get("success", False):
